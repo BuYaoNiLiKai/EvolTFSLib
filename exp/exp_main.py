@@ -251,28 +251,28 @@ class Exp_Main(Exp_Basic):
                     visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
                     np.savetxt(os.path.join(folder_path, str(i) + '.txt'), pd)
                     np.savetxt(os.path.join(folder_path, str(i) + 'true.txt'), gt)
-                preds = np.concatenate(preds, axis=0)
-                trues = np.concatenate(trues, axis=0)
-                print('test shape:', preds.shape, trues.shape)
-                preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-                trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-                print('test shape:', preds.shape, trues.shape)
-                # result save
-                folder_path = './results/' + setting + '/'
-                if not os.path.exists(folder_path):
-                    os.makedirs(folder_path)
+        preds = np.concatenate(preds, axis=0)
+        trues = np.concatenate(trues, axis=0)
+        print('test shape:', preds.shape, trues.shape)
+        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
+        trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
+        print('test shape:', preds.shape, trues.shape)
+        # result save
+        folder_path = './results/' + setting + '/'
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
 
-                mae, mse, rmse, mape, mspe = metric(preds, trues)
-                print('mse:{}, mae:{}'.format(mse, mae))
-                f = open("result.txt", 'a')
-                f.write(setting + "  \n")
-                f.write('mse:{}, mae:{}'.format(mse, mae))
-                f.write('\n')
-                f.write('\n')
-                f.close()
+        mae, mse, rmse, mape, mspe = metric(preds, trues)
+        print('mse:{}, mae:{}'.format(mse, mae))
+        f = open("result.txt", 'a')
+        f.write(setting + "  \n")
+        f.write('mse:{}, mae:{}'.format(mse, mae))
+        f.write('\n')
+        f.write('\n')
+        f.close()
 
-                # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
-                # np.save(folder_path + 'pred.npy', preds)
-                # np.save(folder_path + 'true.npy', trues)
+        # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
+        # np.save(folder_path + 'pred.npy', preds)
+        # np.save(folder_path + 'true.npy', trues)
 
-                return
+        return
