@@ -83,9 +83,6 @@ class Dataset_ETT_hour(Dataset):
                 df_stamp['day'] = (df_stamp['day']-1)/31
                 df_stamp['weekday'] = (df_stamp['weekday']-1)/7
                 df_stamp['hour'] = (df_stamp['hour']-1)/24
-
-
-
             data_stamp = df_stamp.drop(['date'], axis=1).values
         elif self.timeenc == 1:
             data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)

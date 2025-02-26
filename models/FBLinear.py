@@ -28,6 +28,7 @@ class Model(nn.Module):
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
         # x_mark_enc: [Batch, Input length, 5 or 6 ] 对应年月日周时分
+
         x_fb = torch.sin(2*torch.pi*x_mark_enc) # [Batch, Input length, 5 or 6 ]
         x_fb = self.coefficients(x_fb) # [Batch, Input length, Channel]
         x_enc = x_enc-x_fb # [Batch, Input length, Channel]
