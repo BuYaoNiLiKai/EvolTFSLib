@@ -25,7 +25,8 @@ def data_provider(args, flag):
         target=args.target,
         timeenc=timeenc,
         freq=freq,
-        cycle=args.cycle
+        cycle=args.cycle,
+
     )
     print(flag, len(data_set))
     data_loader = DataLoader(

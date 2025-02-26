@@ -65,8 +65,14 @@ if __name__ == '__main__':
     parser.add_argument('--activation', type=str, default='gelu', help='activation')
     parser.add_argument('--output_attention', action='store_true', help='whether to output attention in ecoder')
 
-    #cyclenet
+    #cyclenet和fb 也就是特殊的一些model的配置
     parser.add_argument('--cycle', type=int, default=24, help='cycle length')
+    parser.add_argument('--fb', type=bool, default=False, help='fb')
+
+    #normalization的配置
+    parser.add_argument('--use_norm', type=bool, default=False, help='use normalization')
+    parser.add_argument('--norm_type', type=str, default='revin', help='normalization type')
+    parser.add_argument('--norm_lr',type=float, default=0.001, help='normalization learning rate')
 
 
     # optimization 优化器
