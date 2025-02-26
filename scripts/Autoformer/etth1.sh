@@ -27,8 +27,8 @@ do
       --c_out 7 \
       --des 'Exp' \
       --itr 1 \
-      --batch_size 256 \
-      --learning_rate 0.01 \
+      --batch_size 32 \
+      --learning_rate 0.0001 \
       --random_seed $random_seed
 done
 done

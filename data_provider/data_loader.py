@@ -14,7 +14,7 @@ warnings.filterwarnings('ignore')
 class Dataset_ETT_hour(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='ETTh1.csv',
-                 target='OT', scale=True, timeenc=0, freq='h', cycle=None,fb=False):
+                 target='OT', scale=True, timeenc=0, freq='h', cycle=None,station_type='no'):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -36,7 +36,7 @@ class Dataset_ETT_hour(Dataset):
         self.timeenc = timeenc
         self.freq = freq
         self.cycle = cycle
-        self.fb = fb
+        self.station_type = station_type
 
         self.root_path = root_path
         self.data_path = data_path
@@ -69,7 +69,7 @@ class Dataset_ETT_hour(Dataset):
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
         if self.timeenc == 0:
             # 返回第几个月的第几天的星期几的第几个小时
-            if  self.fb:
+            if  self.station_type=='fb':
                 df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)
                 df_stamp['year'] = df_stamp['year'] - df_stamp['year'].min() #年编码
                 df_stamp['year'] = df_stamp['year'] /(df_stamp['year'].max()-df_stamp['year'].min()+1)
@@ -78,7 +78,7 @@ class Dataset_ETT_hour(Dataset):
             df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
             df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
             df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
-            if self.fb:
+            if self.station_type == 'fb':
                 df_stamp['month'] = (df_stamp['month'] -1)/12
                 df_stamp['day'] = (df_stamp['day']-1)/31
                 df_stamp['weekday'] = (df_stamp['weekday']-1)/7
@@ -120,7 +120,7 @@ class Dataset_ETT_hour(Dataset):
 class Dataset_ETT_minute(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='ETTm1.csv',
-                 target='OT', scale=True, timeenc=0, freq='t', cycle=None,fb=False):
+                 target='OT', scale=True, timeenc=0, freq='t', cycle=None,station_type='no'):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -142,7 +142,7 @@ class Dataset_ETT_minute(Dataset):
         self.timeenc = timeenc
         self.freq = freq
         self.cycle = cycle
-        self.fb = fb
+        self.station_type=station_type
 
         self.root_path = root_path
         self.data_path = data_path
@@ -174,7 +174,7 @@ class Dataset_ETT_minute(Dataset):
         df_stamp = df_raw[['date']][border1:border2]
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
         if self.timeenc == 0:
-            if self.fb:
+            if self.station_type=='fb':
                 df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)
                 df_stamp['year'] = df_stamp['year'] - df_stamp['year'].min() #年编码
                 df_stamp['year'] = df_stamp['year'] /(df_stamp['year'].max()-df_stamp['year'].min()+1)
@@ -184,7 +184,7 @@ class Dataset_ETT_minute(Dataset):
             df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
             df_stamp['minute'] = df_stamp.date.apply(lambda row: row.minute, 1)
             df_stamp['minute'] = df_stamp.minute.map(lambda x: x // 15)
-            if self.fb:
+            if self.station_type=='fb':
                 df_stamp['month'] = (df_stamp['month'] -1)/12
                 df_stamp['day'] = (df_stamp['day']-1)/31
                 df_stamp['weekday'] = (df_stamp['weekday']-1)/7
@@ -227,7 +227,7 @@ class Dataset_ETT_minute(Dataset):
 class Dataset_Custom(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features='S', data_path='ETTh1.csv',
-                 target='OT', scale=True, timeenc=0, freq='h', cycle=None,fb=False):
+                 target='OT', scale=True, timeenc=0, freq='h', cycle=None, station_type='no'):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -249,7 +249,7 @@ class Dataset_Custom(Dataset):
         self.timeenc = timeenc
         self.freq = freq
         self.cycle = cycle
-        self.fb = fb
+        self.station_type=station_type
 
         self.root_path = root_path
         self.data_path = data_path
@@ -294,7 +294,7 @@ class Dataset_Custom(Dataset):
         df_stamp = df_raw[['date']][border1:border2]
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
         if self.timeenc == 0:
-            if self.fb:
+            if self.station_type=='fb':
                 df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)
                 df_stamp['year'] = df_stamp['year'] - df_stamp['year'].min() #年编码
                 df_stamp['year'] = df_stamp['year'] /(df_stamp['year'].max()-df_stamp['year'].min()+1)
@@ -302,7 +302,7 @@ class Dataset_Custom(Dataset):
             df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
             df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
             df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
-            if self.fb:
+            if self.station_type=='fb':
                 df_stamp['month'] = (df_stamp['month'] -1)/12
                 df_stamp['day'] = (df_stamp['day']-1)/31
                 df_stamp['weekday'] = (df_stamp['weekday']-1)/7

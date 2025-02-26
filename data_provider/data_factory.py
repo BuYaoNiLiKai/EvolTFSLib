@@ -26,7 +26,7 @@ def data_provider(args, flag):
         timeenc=timeenc,
         freq=freq,
         cycle=args.cycle,
-        fb=args.fb
+        station_type=args.station_type
     )
     print(flag, len(data_set))
     data_loader = DataLoader(

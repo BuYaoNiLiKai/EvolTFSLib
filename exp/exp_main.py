@@ -1,6 +1,7 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from models import Informer, Autoformer, DLinear, PatchTST, TimesNet, iTransformer,FBLinear
+from plugins import FB,No
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
 
@@ -23,6 +24,8 @@ warnings.filterwarnings('ignore')
 class Exp_Main(Exp_Basic):
     def __init__(self, args):
         super(Exp_Main, self).__init__(args)
+        self.station_pretrain_epoch = 5 if self.args.station_type != 'no' else 0
+        self.station_type = args.station_type
     def _build_model(self):
         model_dict = {
             'Autoformer': Autoformer,
@@ -33,6 +36,11 @@ class Exp_Main(Exp_Basic):
             'iTransformer': iTransformer,
             'FBLinear': FBLinear
         }
+        stabilizer_dict = {
+            'fb': FB,
+            'none':No
+        }
+        self.stabilizer = stabilizer_dict[self.station_type].Model(self.args).float().to(self.device)
         model = model_dict[self.args.model].Model(self.args).float()
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = nn.DataParallel(model, device_ids=self.args.device_ids)
@@ -43,6 +51,7 @@ class Exp_Main(Exp_Basic):
 
     def _select_optimizer(self):
         model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
+        self.station_optim = optim.Adam(self.stabilizer.parameters(), lr=self.args.learning_rate)
         return model_optim
 
     def _select_criterion(self):
@@ -58,10 +67,15 @@ class Exp_Main(Exp_Basic):
         if not os.path.exists(path):
             os.makedirs(path)
 
+        path_station = './station/' + '{}_s{}_p{}'.format(self.args.data, self.args.seq_len, self.args.pred_len)
+        if not os.path.exists(path_station):
+            os.makedirs(path_station)
+
         time_now = time.time()
 
         train_steps = len(train_loader)
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
+        early_stopping_station_model = EarlyStopping(patience=self.args.patience, verbose=True)
 
         model_optim = self._select_optimizer()
         criterion = self._select_criterion()
@@ -69,11 +83,18 @@ class Exp_Main(Exp_Basic):
         if self.args.use_amp:
             scaler = torch.cuda.amp.GradScaler()
 
-        for epoch in range(self.args.train_epochs):
+        for epoch in range(self.args.train_epochs+self.station_pretrain_epoch):
             iter_count = 0
             train_loss = []
 
+            if epoch == self.station_pretrain_epoch and self.args.station_type == 'adaptive':
+                best_model_path = path_station + '/' + 'checkpoint.pth'
+                self.stabilizer.load_state_dict(torch.load(best_model_path))
+                print('loading pretrained adaptive station model')
+                # self.statistics_pred.requires_grad_(False)
+
             self.model.train()
+            self.stabilizer.train()
             epoch_time = time.time()
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark,batch_cycle) in enumerate(train_loader):
                 iter_count += 1
@@ -82,35 +103,54 @@ class Exp_Main(Exp_Basic):
                 batch_y = batch_y.float().to(self.device)
                 batch_x_mark = batch_x_mark.float().to(self.device)
                 batch_y_mark = batch_y_mark.float().to(self.device)
+                batch_x, statistics_pred = self.stabilizer.normalize(batch_x,batch_x_mark,batch_y_mark)
+                if epoch + 1 <= self.station_pretrain_epoch:
+                    f_dim = -1 if self.args.features == 'MS' else 0
+                    batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                    statistics_pred = statistics_pred[:, -self.args.pred_len:, f_dim:]
 
-                # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
+                    if self.args.features == 'MS':
+                        statistics_pred = statistics_pred[:, :, [self.args.enc_in - 1, -1]]
+                    loss = criterion(batch_y, statistics_pred)
+                    train_loss.append(loss.item())
+                else:
 
-                # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
-                        if self.args.output_attention:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                    # decoder input
+                    dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
+                    dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
+
+                    # encoder - decoder
+                    if self.args.use_amp:
+                        with torch.cuda.amp.autocast():
+                            if 'Linear' in self.args.model:
+                                outputs = self.model(batch_x)
+                            else:
+                                if self.args.output_attention:
+                                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                                else:
+                                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                            f_dim = -1 if self.args.features == 'MS' else 0
+                            outputs = outputs[:, -self.args.pred_len:, f_dim:]
+                            batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                            loss = criterion(outputs, batch_y)
+                            train_loss.append(loss.item())
+                    else:
+                        if 'Linear' in self.args.model:
+                            outputs = self.model(batch_x)
                         else:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                            if self.args.output_attention:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                            else:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
 
                         f_dim = -1 if self.args.features == 'MS' else 0
                         outputs = outputs[:, -self.args.pred_len:, f_dim:]
+                        if self.args.features == 'MS':
+                            statistics_pred = statistics_pred[:, :, [self.args.enc_in - 1, -1]]
+                        outputs = self.stabilizer.de_normalize(outputs, statistics_pred)
                         batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
                         loss = criterion(outputs, batch_y)
                         train_loss.append(loss.item())
-                else:
-                    if self.args.output_attention:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-                    else:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-
-                    f_dim = -1 if self.args.features == 'MS' else 0
-                    outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                    batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-                    loss = criterion(outputs, batch_y)
-                    train_loss.append(loss.item())
 
                 if (i + 1) % 100 == 0:
                     print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item()))
@@ -126,21 +166,35 @@ class Exp_Main(Exp_Basic):
                     scaler.update()
                 else:
                     loss.backward()
-                    model_optim.step()
+                    if epoch + 1 <= self.station_pretrain_epoch:
+                        self.station_optim.step()
+                    else:
+                        model_optim.step()
+                    model_optim.zero_grad()
+                    self.station_optim.zero_grad()
 
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
-            vali_loss = self.vali(vali_data, vali_loader, criterion)
-            test_loss = self.vali(test_data, test_loader, criterion)
+            vali_loss = self.vali(vali_data, vali_loader, criterion,epoch)
+            test_loss = self.vali(test_data, test_loader, criterion,epoch)
+            if epoch + 1 <= self.station_pretrain_epoch:
+                print(
+                    "Station Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
+                        epoch + 1, train_steps, train_loss, vali_loss, test_loss))
+                early_stopping_station_model(vali_loss, self.stabilizer, path_station)
+                adjust_learning_rate(self.station_optim, epoch + 1, self.args, self.args.station_lr)
+            else:
+                print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
+                    epoch + 1, train_steps, train_loss, vali_loss, test_loss))
+                early_stopping(vali_loss, self.model, path)
+                if early_stopping.early_stop:
+                    print("Early stopping")
+                    break
 
-            print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
-                epoch + 1, train_steps, train_loss, vali_loss, test_loss))
-            early_stopping(vali_loss, self.model, path)
-            if early_stopping.early_stop:
-                print("Early stopping")
-                break
-
-            adjust_learning_rate(model_optim, epoch + 1, self.args)
+                adjust_learning_rate(model_optim, epoch + 1 - self.station_pretrain_epoch, self.args,
+                                     self.args.learning_rate)
+                adjust_learning_rate(self.station_optim, epoch + 1 - self.station_pretrain_epoch, self.args,
+                                     self.args.station_lr)
 
         best_model_path = path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
@@ -149,44 +203,62 @@ class Exp_Main(Exp_Basic):
 
 
 
-    def vali(self, vali_data, vali_loader, criterion):
+    def vali(self, vali_data, vali_loader, criterion,epoch):
         total_loss = []
         self.model.eval()
+        self.stabilizer.eval()
         with torch.no_grad():
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark,batch_cycle) in enumerate(vali_loader):
                 batch_x = batch_x.float().to(self.device)
-                batch_y = batch_y.float()
-
+                batch_y = batch_y.float().to(self.device)
                 batch_x_mark = batch_x_mark.float().to(self.device)
                 batch_y_mark = batch_y_mark.float().to(self.device)
+                batch_x, statistics_pred = self.stabilizer.normalize(batch_x, batch_x_mark, batch_y_mark)
+                if epoch + 1 <= self.station_pretrain_epoch:
+                    f_dim = -1 if self.args.features == 'MS' else 0
+                    batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                    statistics_pred = statistics_pred[:, -self.args.pred_len:, f_dim:]
 
-                # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
-                # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
-                        if self.args.output_attention:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-                        else:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                    if self.args.features == 'MS':
+                        statistics_pred = statistics_pred[:, :, [self.args.enc_in - 1, -1]]
+                    loss = criterion(batch_y, statistics_pred)
                 else:
-                    if self.args.output_attention:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                    # decoder input
+                    dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
+                    dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
+
+                    # encoder - decoder
+                    if self.args.use_amp:
+                        with torch.cuda.amp.autocast():
+                            if 'Linear' in self.args.model:
+                                outputs = self.model(batch_x)
+                            else:
+                                if self.args.output_attention:
+                                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                                else:
+                                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                     else:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                f_dim = -1 if self.args.features == 'MS' else 0
-                outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                        if 'Linear' in self.args.model:
+                            outputs = self.model(batch_x)
+                        else:
+                            if self.args.output_attention:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                            else:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
 
-                pred = outputs.detach().cpu()
-                true = batch_y.detach().cpu()
-
-                loss = criterion(pred, true)
-
-                total_loss.append(loss)
+                    f_dim = -1 if self.args.features == 'MS' else 0
+                    outputs = outputs[:, -self.args.pred_len:, f_dim:]
+                    if self.args.features == 'MS':
+                        statistics_pred = statistics_pred[:, :, [self.args.enc_in - 1, -1]]
+                    outputs = self.stabilizer.de_normalize(outputs, statistics_pred)
+                    batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                    pred = outputs.detach().cpu()
+                    true = batch_y.detach().cpu()
+                    loss = criterion(pred, true)
+                total_loss.append(loss.cpu().item())
         total_loss = np.average(total_loss)
         self.model.train()
+        self.stabilizer.train()
         return total_loss
 
     def test(self, setting, test=0):
@@ -206,6 +278,8 @@ class Exp_Main(Exp_Basic):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().to(self.device)
 
+                batch_x, statistics_pred = self.stabilizer.normalize(batch_x,batch_x_mark, batch_y_mark)
+
                 batch_x_mark = batch_x_mark.float().to(self.device)
                 batch_y_mark = batch_y_mark.float().to(self.device)
 
@@ -215,18 +289,26 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
+                        if 'Linear' in self.args.model:
+                            outputs = self.model(batch_x)
+                        else:
+                            if self.args.output_attention:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                            else:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                else:
+                    if 'Linear' in self.args.model:
+                        outputs = self.model(batch_x)
+                    else:
                         if self.args.output_attention:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
                         else:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                else:
-                    if self.args.output_attention:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-
-                    else:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 f_dim = -1 if self.args.features == 'MS' else 0
                 outputs = outputs[:, -self.args.pred_len:, :]
+                if self.args.features == 'MS':
+                    statistics_pred = statistics_pred[:, :, [self.args.enc_in - 1, -1]]
+                outputs = self.stabilizer.de_normalize(outputs, statistics_pred)
                 batch_y = batch_y[:, -self.args.pred_len:, :].to(self.device)
                 outputs = outputs.detach().cpu().numpy()
                 batch_y = batch_y.detach().cpu().numpy()

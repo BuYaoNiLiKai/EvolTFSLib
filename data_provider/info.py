@@ -26,7 +26,7 @@ if __name__ == '__main__':
     target = 'OT'
     cycle = 24
     scale =False
-    fb=True
+    station_type = 'fb'
     data_set = Data(
         root_path=root_path,
         data_path=data_path,
@@ -38,10 +38,10 @@ if __name__ == '__main__':
         freq=freq,
         cycle=cycle,
         scale=scale,
-        fb=fb
+        station_type=station_type,
     )
     batch_size = 32
-    num_workers = 4
+    num_workers = 0
 
     print(len(data_set))
     data_loader = DataLoader(
