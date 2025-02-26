@@ -16,7 +16,7 @@ if __name__ == '__main__':
     flag = 'train'
     shuffle_flag = False
     drop_last = False
-    seq_len = 25
+    seq_len = 200
     label_len = 5
     pred_len = 10
     freq = 'h'
@@ -39,6 +39,7 @@ if __name__ == '__main__':
     print(data_set)
     print(len(data_set))
     for i in data_set[0]:
+        # print(i)
         print(i)
         print("___________________________")
 

@@ -1,5 +1,34 @@
-import torch.nn
-import torch
-x = torch.rand(32,96,7)
-print(x)
-embed = torch.nn.Embedding(100, 64)
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 生成时间范围
+start_time = pd.to_datetime("2016-07-01 00:00:00")
+end_time = pd.to_datetime("2018-06-26 19:00:00")
+time_range = pd.date_range(start=start_time, end=end_time, freq="H")  # 以小时为单位
+
+# 提取时间特征
+years = (time_range.year - time_range.year.min()) % 2  # 2年周期
+months = (time_range.month - 1) / 12  # 12个月周期 (0-11)
+days = (time_range.day - 1) / 31  # 31天周期 (0-30)
+weekdays = time_range.weekday / 7  # 7天周期 (0-6)
+
+# 计算正弦基函数
+sin_years = np.sin(2 * np.pi * years)
+sin_months = np.sin(2 * np.pi * months)
+sin_days = np.sin(2 * np.pi * days)
+sin_weekdays = np.sin(2 * np.pi * weekdays)
+
+# 线性组合的系数 (假设系数为 [1, 0.5, 0.3, 0.2])
+coeffs = np.array([1, 0.5, 0.3, 0.2])
+signal = coeffs[0] * sin_years + coeffs[1] * sin_months + coeffs[2] * sin_days + coeffs[3] * sin_weekdays
+
+# 绘制图像
+plt.figure(figsize=(12, 6))
+plt.plot(time_range[:1000], signal[:1000], label="Sine Combination Signal")  # 取前1000个点展示
+plt.xlabel("Time")
+plt.ylabel("Signal Value")
+plt.title("Generated Periodic Signal (Years, Months, Days, Weekdays)")
+plt.legend()
+plt.grid()
+plt.show()

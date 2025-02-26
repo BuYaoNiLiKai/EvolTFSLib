@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 
 class ConvLayer(nn.Module):
+    """结果是使得输入的序列长度变为原来的一半"""
     def __init__(self, c_in):
         super(ConvLayer, self).__init__()
         self.downConv = nn.Conv1d(in_channels=c_in,
@@ -27,9 +28,9 @@ class ConvLayer(nn.Module):
 class EncoderLayer(nn.Module):
     def __init__(self, attention, d_model, d_ff=None, dropout=0.1, activation="relu"):
         super(EncoderLayer, self).__init__()
-        d_ff = d_ff or 4 * d_model
+        d_ff = d_ff or 4 * d_model # d_model = 512 n_heads = 8
         self.attention = attention
-        self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1)
+        self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1) #feedforward
         self.conv2 = nn.Conv1d(in_channels=d_ff, out_channels=d_model, kernel_size=1)
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)

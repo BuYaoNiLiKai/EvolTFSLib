@@ -12,6 +12,7 @@ import os
 
 # 正常的attention
 class FullAttention(nn.Module):
+    """正常的Attention 返回的shape为 B L H D 批次大小 长度 注意力头数 嵌入维度"""
     def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
         super(FullAttention, self).__init__()
         self.scale = scale
@@ -20,9 +21,9 @@ class FullAttention(nn.Module):
         self.dropout = nn.Dropout(attention_dropout)
 
     def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
-        B, L, H, E = queries.shape
+        B, L, H, E = queries.shape #批次大小 B，序列长度 L，注意力头数 H，嵌入维度 E）
         _, S, _, D = values.shape
-        scale = self.scale or 1. / sqrt(E)
+        scale = self.scale or 1. / sqrt(E) # 缩放因子 防止梯度爆炸
 
         scores = torch.einsum("blhe,bshe->bhls", queries, keys)
 

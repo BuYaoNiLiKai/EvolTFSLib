@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 
 # 显示数据集
 root_path = '../dataset/'
-file_name = 'electricity'
+file_name = 'ETTh2'
 file_name = root_path + file_name + '.csv'
 data = pd.read_csv(file_name)
 
