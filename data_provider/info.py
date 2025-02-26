@@ -9,9 +9,9 @@ if __name__ == '__main__':
         'ETTm2': Dataset_ETT_minute,
         'custom': Dataset_Custom,
     }
-    data = 'ETTm2'
+    data = 'ETTh2'
     root_path = '../dataset/'
-    data_path = 'ETTm2.csv'
+    data_path = 'ETTh2.csv'
     Data = data_dict[data]
     print(data_dict[data])
     timeenc = 0
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     seq_len = 96
     label_len = 48
     pred_len = 192
-    freq = 't'
+    freq = 'h'
     features = 'M'
     target = 'OT'
     cycle = 24
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     batch_size = 32
     num_workers = 4
 
-
+    print(len(data_set))
     data_loader = DataLoader(
         data_set,
         batch_size=batch_size,
