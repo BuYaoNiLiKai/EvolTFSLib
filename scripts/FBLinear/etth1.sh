@@ -20,6 +20,7 @@ do
       --pred_len $pred_len \
       --enc_in 7 \
       --fb True \
+      --embed 'f'\
       --des 'Exp' \
       --itr 1 \
       --batch_size 256 \

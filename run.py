@@ -68,6 +68,7 @@ if __name__ == '__main__':
     #cyclenet和fb 也就是特殊的一些model的配置
     parser.add_argument('--cycle', type=int, default=24, help='cycle length')
     parser.add_argument('--fb', type=bool, default=False, help='fb')
+    parser.add_argument('--fb_lr', type=float, default=0.01, help='learning rate for fb')
 
     #normalization的配置
     parser.add_argument('--use_norm', type=bool, default=False, help='use normalization')
@@ -78,7 +79,7 @@ if __name__ == '__main__':
     # optimization 优化器
     parser.add_argument('--num_workers', type=int, default=10, help='data loader num workers')
     parser.add_argument('--itr', type=int, default=1, help='experiments times')
-    parser.add_argument('--train_epochs', type=int, default=10, help='train epochs')
+    parser.add_argument('--train_epochs', type=int, default=30, help='train epochs')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size of train input data')
     parser.add_argument('--patience', type=int, default=3, help='early stopping patience')
     parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')

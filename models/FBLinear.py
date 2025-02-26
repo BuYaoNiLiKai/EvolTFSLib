@@ -5,13 +5,10 @@ import torch.nn.functional as F
 
 class Model(nn.Module):
     """
-    Decomposition-Linear
     """
 
     def __init__(self, configs):
         super(Model, self).__init__()
-        self.seq_len = configs.seq_len
-        self.pred_len =configs. pred_len
         self.freq = configs.freq
         self.channels = configs.enc_in
         # 年 月  日 周 时 分
@@ -24,19 +21,12 @@ class Model(nn.Module):
             # self.phase = nn.Parameter(torch.zeros(6, self.channels),requires_grad=True)
         else:
             raise ValueError('Invalid frequency!')
-        self.fc1 = nn.Linear(self.seq_len, self.pred_len)
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
         # x_mark_enc: [Batch, Input length, 5 or 6 ] 对应年月日周时分
-
         x_fb = torch.sin(2*torch.pi*x_mark_enc) # [Batch, Input length, 5 or 6 ]
         x_fb = self.coefficients(x_fb) # [Batch, Input length, Channel]
-        x_enc = x_enc-x_fb # [Batch, Input length, Channel]
-        y = self.fc1(x_enc.permute(0, 2, 1)).permute(0, 2, 1)
-        x_dec_mark = torch.sin(2*torch.pi*x_mark_dec) # [Batch, Prediction length, 5 or 6 ]
-        x_dec_mark = self.coefficients(x_dec_mark) # [Batch, Prediction length, Channel]
-        y = y+x_dec_mark
-        return y
+        return x_fb
 if __name__ == '__main__':
     from torch.utils.data import DataLoader
 
