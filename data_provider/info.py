@@ -1,3 +1,5 @@
+from torch.utils.data import DataLoader
+
 from data_provider.data_loader import (Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom, )
 if __name__ == '__main__':
     data_dict = {
@@ -16,9 +18,9 @@ if __name__ == '__main__':
     flag = 'train'
     shuffle_flag = False
     drop_last = False
-    seq_len = 20
-    label_len = 5
-    pred_len = 10
+    seq_len = 96
+    label_len = 48
+    pred_len = 192
     freq = 't'
     features = 'M'
     target = 'OT'
@@ -38,12 +40,19 @@ if __name__ == '__main__':
         scale=scale,
         fb=fb
     )
-    print(data_set)
-    print(len(data_set))
-    for i in data_set[11000*3]:
-        # print(i)
-        print(i)
-        print("___________________________")
+    batch_size = 32
+    num_workers = 4
 
+
+    data_loader = DataLoader(
+        data_set,
+        batch_size=batch_size,
+        shuffle=shuffle_flag,
+        num_workers=num_workers,
+        drop_last=drop_last)
+    print(len(data_loader))
+    for i, (batch_x, batch_y, batch_x_mark, batch_y_mark,_) in enumerate(data_loader):
+        print(batch_x.shape, batch_y.shape, batch_x_mark.shape, batch_y_mark.shape)
+        break
 
 
