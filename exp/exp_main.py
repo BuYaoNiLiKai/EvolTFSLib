@@ -1,6 +1,6 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from models import Informer, Autoformer, DLinear, PatchTST, TimesNet, iTransformer
+from models import Informer, Autoformer, DLinear, PatchTST, TimesNet, iTransformer,FBLinear
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
 
@@ -30,7 +30,8 @@ class Exp_Main(Exp_Basic):
             'DLinear': DLinear,
             'PatchTST': PatchTST,
             'TimesNet': TimesNet,
-            'iTransformer': iTransformer
+            'iTransformer': iTransformer,
+            'FBLinear': FBLinear
         }
         model = model_dict[self.args.model].Model(self.args).float()
         if self.args.use_multi_gpu and self.args.use_gpu:
