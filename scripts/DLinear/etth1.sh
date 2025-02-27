@@ -21,7 +21,7 @@ do
       --enc_in 7 \
       --dec_in 7 \
       --station_type 'fb'\
-      --station_lr 0.0001 \
+      --station_lr 0.01 \
       --des 'Exp' \
       --itr 1 \
       --batch_size 32 \
