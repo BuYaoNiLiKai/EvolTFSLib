@@ -33,7 +33,7 @@ signal = coeffs[0] * sin_years + coeffs[1] * sin_months + coeffs[2] * sin_days +
 
 
 # 显示数据集
-root_path = './dataset/'
+root_path = '../dataset/'
 data_path = 'ETTh1.csv'
 df_raw = pd.read_csv(os.path.join(root_path,
                                   data_path))

@@ -13,7 +13,7 @@ class Model(nn.Module):
         self.channels = configs.enc_in
         # 年 月  日 周 时 分
         # 年趋势
-        self.year_trend = nn.Parameter(torch.zeros(2,self.channels), requires_grad=True)
+        self.year_trend = nn.Parameter(torch.zeros(3,self.channels), requires_grad=True)
         self.quarter_trend = nn.Parameter(torch.zeros(4,self.channels), requires_grad=True)
         self.month_trend = nn.Parameter(torch.zeros(12,self.channels), requires_grad=True)
         self.week_trend = nn.Parameter(torch.zeros(7,self.channels), requires_grad=True)
