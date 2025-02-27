@@ -11,7 +11,7 @@ if __name__ == '__main__':
     }
     data = 'ETTh2'
     root_path = '../dataset/'
-    data_path = 'ETTh2.csv'
+    data_path = 'ETTh1.csv'
     Data = data_dict[data]
     print(data_dict[data])
     timeenc = 0
@@ -40,7 +40,7 @@ if __name__ == '__main__':
         scale=scale,
         station_type=station_type,
     )
-    batch_size = 32
+    batch_size = 1
     num_workers = 0
 
     print(len(data_set))
@@ -53,6 +53,7 @@ if __name__ == '__main__':
     print(len(data_loader))
     for i, (batch_x, batch_y, batch_x_mark, batch_y_mark,_) in enumerate(data_loader):
         print(batch_x.shape, batch_y.shape, batch_x_mark.shape, batch_y_mark.shape)
+        print(batch_x_mark)
         break
 
 

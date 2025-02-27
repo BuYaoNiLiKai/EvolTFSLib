@@ -46,7 +46,8 @@ class Dataset_ETT_hour(Dataset):
         self.scaler = StandardScaler()
         df_raw = pd.read_csv(os.path.join(self.root_path,
                                           self.data_path))
-
+        # 获取数据集的开始年份
+        self.start_year =pd.to_datetime(df_raw['date'][0]).year
         border1s = [0, 12 * 30 * 24 - self.seq_len, 12 * 30 * 24 + 4 * 30 * 24 - self.seq_len]
         border2s = [12 * 30 * 24, 12 * 30 * 24 + 4 * 30 * 24, 12 * 30 * 24 + 8 * 30 * 24]
         border1 = border1s[self.set_type]
@@ -70,19 +71,13 @@ class Dataset_ETT_hour(Dataset):
         if self.timeenc == 0:
             # 返回第几个月的第几天的星期几的第几个小时
             if  self.station_type=='fb':
-                df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)
-                df_stamp['year'] = df_stamp['year'] - df_stamp['year'].min() #年编码
-                df_stamp['year'] = df_stamp['year'] /(df_stamp['year'].max()-df_stamp['year'].min()+1)
+                df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)-self.start_year  # 年编码
+            df_stamp['quarter'] = ((df_stamp.date.apply(lambda row: row.month, 1) + 9) % 12) // 3
+            df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)-1
 
-            df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
-            df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
+            df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)-1
             df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
             df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
-            if self.station_type == 'fb':
-                df_stamp['month'] = (df_stamp['month'] -1)/12
-                df_stamp['day'] = (df_stamp['day']-1)/31
-                df_stamp['weekday'] = (df_stamp['weekday']-1)/7
-                df_stamp['hour'] = (df_stamp['hour']-1)/24
             data_stamp = df_stamp.drop(['date'], axis=1).values
         elif self.timeenc == 1:
             data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
@@ -152,7 +147,7 @@ class Dataset_ETT_minute(Dataset):
         self.scaler = StandardScaler()
         df_raw = pd.read_csv(os.path.join(self.root_path,
                                           self.data_path))
-
+        self.start_year = pd.to_datetime(df_raw['date'][0]).year
         border1s = [0, 12 * 30 * 24 * 4 - self.seq_len, 12 * 30 * 24 * 4 + 4 * 30 * 24 * 4 - self.seq_len]
         border2s = [12 * 30 * 24 * 4, 12 * 30 * 24 * 4 + 4 * 30 * 24 * 4, 12 * 30 * 24 * 4 + 8 * 30 * 24 * 4]
         border1 = border1s[self.set_type]
@@ -175,21 +170,15 @@ class Dataset_ETT_minute(Dataset):
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
         if self.timeenc == 0:
             if self.station_type=='fb':
-                df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)
-                df_stamp['year'] = df_stamp['year'] - df_stamp['year'].min() #年编码
-                df_stamp['year'] = df_stamp['year'] /(df_stamp['year'].max()-df_stamp['year'].min()+1)
-            df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
-            df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
+                df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)-self.start_year
+
+            df_stamp['quarter'] = ((df_stamp.date.apply(lambda row: row.month, 1) + 9) % 12) // 3
+            df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)-1
+            df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)-1
             df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
             df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
             df_stamp['minute'] = df_stamp.date.apply(lambda row: row.minute, 1)
             df_stamp['minute'] = df_stamp.minute.map(lambda x: x // 15)
-            if self.station_type=='fb':
-                df_stamp['month'] = (df_stamp['month'] -1)/12
-                df_stamp['day'] = (df_stamp['day']-1)/31
-                df_stamp['weekday'] = (df_stamp['weekday']-1)/7
-                df_stamp['hour'] = (df_stamp['hour']-1)/24
-                df_stamp['minute'] = df_stamp['minute']/4
             data_stamp = df_stamp.drop(['date'],axis= 1).values
         elif self.timeenc == 1:
             data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
@@ -263,6 +252,7 @@ class Dataset_Custom(Dataset):
         '''
         df_raw.columns: ['date', ...(other features), target feature]
         '''
+        self.start_year = pd.to_datetime(df_raw['date'][0]).year
         cols = list(df_raw.columns)
         cols.remove(self.target)
         cols.remove('date')
@@ -295,19 +285,13 @@ class Dataset_Custom(Dataset):
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
         if self.timeenc == 0:
             if self.station_type=='fb':
-                df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)
-                df_stamp['year'] = df_stamp['year'] - df_stamp['year'].min() #年编码
-                df_stamp['year'] = df_stamp['year'] /(df_stamp['year'].max()-df_stamp['year'].min()+1)
-            df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
-            df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
-            df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
-            df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
-            if self.station_type=='fb':
-                df_stamp['month'] = (df_stamp['month'] -1)/12
-                df_stamp['day'] = (df_stamp['day']-1)/31
-                df_stamp['weekday'] = (df_stamp['weekday']-1)/7
-                df_stamp['hour'] = (df_stamp['hour']-1)/24
+                df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)-self.start_year
 
+            df_stamp['quarter'] = ((df_stamp.date.apply(lambda row: row.month, 1) + 9) % 12) // 3
+            df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)-1
+            df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)-1
+            df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)-1
+            df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
             data_stamp = df_stamp.drop(['date'], axis=1).values
         elif self.timeenc == 1:
             data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)

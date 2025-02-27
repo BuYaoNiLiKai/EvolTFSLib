@@ -69,7 +69,9 @@ if __name__ == '__main__':
     parser.add_argument('--cycle', type=int, default=24, help='cycle length')
     parser.add_argument('--station_type', type=str, default='no', help='normalization type')
     parser.add_argument('--station_lr',type=float, default=0.001, help='normalization learning rate')
-
+    # DLinear
+    parser.add_argument('--individual', action='store_true', default=False,
+                        help='DLinear: a linear layer for each variate(channel) individually')
 
     # optimization 优化器
     parser.add_argument('--num_workers', type=int, default=10, help='data loader num workers')

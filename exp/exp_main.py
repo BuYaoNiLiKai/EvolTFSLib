@@ -40,7 +40,7 @@ class Exp_Main(Exp_Basic):
             'fb': FB,
             'none':No
         }
-        self.stabilizer = stabilizer_dict[self.station_type].Model(self.args).float().to(self.device)
+        self.stabilizer = stabilizer_dict[self.args.station_type].Model(self.args).float().to(self.device)
         model = model_dict[self.args.model].Model(self.args).float()
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = nn.DataParallel(model, device_ids=self.args.device_ids)
@@ -87,7 +87,7 @@ class Exp_Main(Exp_Basic):
             iter_count = 0
             train_loss = []
 
-            if epoch == self.station_pretrain_epoch and self.args.station_type == 'adaptive':
+            if epoch == self.station_pretrain_epoch and self.args.station_type != 'none':
                 best_model_path = path_station + '/' + 'checkpoint.pth'
                 self.stabilizer.load_state_dict(torch.load(best_model_path))
                 print('loading pretrained adaptive station model')
@@ -278,11 +278,11 @@ class Exp_Main(Exp_Basic):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().to(self.device)
 
-                batch_x, statistics_pred = self.stabilizer.normalize(batch_x,batch_x_mark, batch_y_mark)
+
 
                 batch_x_mark = batch_x_mark.float().to(self.device)
                 batch_y_mark = batch_y_mark.float().to(self.device)
-
+                batch_x, statistics_pred = self.stabilizer.normalize(batch_x, batch_x_mark, batch_y_mark)
                 # decoder input
                 dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
                 dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
