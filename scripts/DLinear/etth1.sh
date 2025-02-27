@@ -1,4 +1,4 @@
-model_name=Autoformer
+model_name=DLinear
 root_path_name=./dataset/
 data_path_name=ETTh1.csv
 model_id_name=ETTh1
@@ -20,6 +20,7 @@ do
       --pred_len $pred_len \
       --enc_in 7 \
       --dec_in 7 \
+      --embed 'f'\
       --station_type 'fb'\
       --station_lr 0.01 \
       --des 'Exp' \
