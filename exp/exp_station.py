@@ -1,6 +1,6 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from models import Informer, Autoformer, DLinear, PatchTST, TimesNet, iTransformer,FBLinear
+from models import Informer, Autoformer, DLinear, PatchTST, TimesNet, iTransformer,FBNet
 from plugins import FB,No
 from utils.tools import EarlyStopping, adjust_learning_rate, visual
 from utils.metrics import metric
@@ -24,7 +24,7 @@ warnings.filterwarnings('ignore')
 class Exp_Main(Exp_Basic):
     def __init__(self, args):
         super(Exp_Main, self).__init__(args)
-        self.station_pretrain_epoch = 5 if self.args.station_type != 'no' else 0
+        self.station_pretrain_epoch = 5 if self.args.station_type != 'none' else 0
         self.station_type = args.station_type
     def _build_model(self):
         model_dict = {
@@ -34,7 +34,7 @@ class Exp_Main(Exp_Basic):
             'PatchTST': PatchTST,
             'TimesNet': TimesNet,
             'iTransformer': iTransformer,
-            'FBLinear': FBLinear
+            'FBLinear': FBNet
         }
         stabilizer_dict = {
             'fb': FB,

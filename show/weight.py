@@ -20,7 +20,9 @@ if __name__ == '__main__':
     model = FB.Model(configs)
     model.load_state_dict(torch.load('etth13.pth', map_location=torch.device('cpu')))
     # 加载到cpu
-
+    root_path = '../dataset/'
+    file_name = 'etth1'
+    file_name = root_path + file_name + '.csv'
     model.eval()
     #获取权重
     print(model)
@@ -43,7 +45,7 @@ if __name__ == '__main__':
     week_index = time_range.weekday
     day_index = time_range.day - 1
     hour_index = time_range.hour
-    col = 1
+    col = -1
     values = np.zeros_like(time_range)
     year_coef = year_coef[:, col]
     quarter_coef = quarter_coef[:, col]
@@ -79,9 +81,7 @@ if __name__ == '__main__':
     plt.show()
     # 画出真实值
     # 显示数据集
-    root_path = '../dataset/'
-    file_name = 'ETTh1'
-    file_name = root_path + file_name + '.csv'
+
     df_raw = pd.read_csv(file_name)
     # 读取最后一列的数据
 
@@ -104,9 +104,16 @@ if __name__ == '__main__':
     seq_len =len(time_range)
     end_index = start_index +seq_len
 
-    # plt.plot(time_range[start_index:end_index], values[start_index:end_index], label='fit values')
-    plt.plot(time_range[start_index:end_index], target[start_index:end_index], label='target')
+
+
+
+    plt.plot(time_range[start_index:end_index], values[start_index:end_index], label='fit values')
+    # plt.plot(time_range[start_index:end_index], target[start_index:end_index], label='target')
     # plt.plot(time_range[start_index:end_index], target[start_index:end_index]-values[start_index:end_index] ,label='gap')
+
+
+
+    plt.grid()
     plt.legend()
     plt.show()
 
