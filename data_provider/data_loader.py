@@ -70,11 +70,9 @@ class Dataset_ETT_hour(Dataset):
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
         if self.timeenc == 0:
             # 返回第几个月的第几天的星期几的第几个小时
-            if  self.station_type=='fb':
-                df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)-self.start_year  # 年编码
+            df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)-self.start_year  # 年编码
             df_stamp['quarter'] = ((df_stamp.date.apply(lambda row: row.month, 1) + 9) % 12) // 3
             df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)-1
-
             df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)-1
             df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
             df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
@@ -169,9 +167,7 @@ class Dataset_ETT_minute(Dataset):
         df_stamp = df_raw[['date']][border1:border2]
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
         if self.timeenc == 0:
-            if self.station_type=='fb':
-                df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)-self.start_year
-
+            df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)-self.start_year
             df_stamp['quarter'] = ((df_stamp.date.apply(lambda row: row.month, 1) + 9) % 12) // 3
             df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)-1
             df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)-1
@@ -284,8 +280,8 @@ class Dataset_Custom(Dataset):
         df_stamp = df_raw[['date']][border1:border2]
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
         if self.timeenc == 0:
-            if self.station_type=='fb':
-                df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)-self.start_year
+
+            df_stamp['year'] = df_stamp.date.apply(lambda row: row.year, 1)-self.start_year
 
             df_stamp['quarter'] = ((df_stamp.date.apply(lambda row: row.month, 1) + 9) % 12) // 3
             df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)-1
