@@ -32,7 +32,11 @@ class Model(nn.Module):
         #     nn.ReLU(),
         #     nn.Linear(self.d_model, self.pred_len)
         # )
-        self.model = nn.Linear(self.seq_len, self.pred_len)
+        # self.model = nn.Linear(self.seq_len, self.pred_len)
+        self.factor = nn.Sequential(
+            nn.Linear(self.seq_len, self.d_model),
+            nn.ReLU(),
+            nn.Linear(self.d_model,6))
     def get_trends(self, time_marks):
         """
         """
@@ -76,14 +80,14 @@ class Model(nn.Module):
 
         # 获取未来时间特征的趋势
         trends_y = combined_trends[:, batch_x_mark.shape[1]:, :]  # (B, L_y, channels)
-
+        factor = self.factor(batch_x.permute(0, 2, 1)).permute(0, 2, 1)
         # 加上 bias
         trends_x = trends_x + self.bias  # (B, L_x, channels)
         trends_y = trends_y + self.bias  # (B, L_y, channels)
-        batch_x = batch_x  - trends_x  # (B, L_x, channels)
-        y_pred    = self.model(batch_x.permute(0, 2, 1)).permute(0, 2, 1) # (B, L_y, pred_len)
-        y_pred = y_pred + trends_y  # (B, L_y, pred_len)
-        return y_pred
+        # batch_x = batch_x  - trends_x  # (B, L_x, channels)
+        # y_pred    = self.model(batch_x.permute(0, 2, 1)).permute(0, 2, 1) # (B, L_y, pred_len)
+        # y_pred = y_pred + trends_y  # (B, L_y, pred_len)
+        return trends_y
 if __name__ == '__main__':
     pass
 
