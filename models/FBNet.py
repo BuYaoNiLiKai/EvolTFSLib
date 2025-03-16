@@ -27,18 +27,28 @@ class Model(nn.Module):
         if self.freq == 't':
             self.minute_trend = nn.Parameter(torch.zeros(4, self.channels), requires_grad=True)
         # 预测模型为一个mlp
-        self.model = nn.Sequential(
-            nn.Linear(self.seq_len, self.d_model),
-            nn.ReLU(),
-            nn.Linear(self.d_model, self.pred_len)
-        )
+        # self.model = nn.Sequential(
+        #     nn.Linear(self.seq_len, self.d_model),
+        #     nn.ReLU(),
+        #     nn.Linear(self.d_model, self.pred_len)
+        # )
+        self.model = nn.Linear(self.seq_len, self.pred_len)
     def get_trends(self, time_marks):
         """
         """
         # 获取所有时间特征的索引，避免多次long()操作
         time_marks = time_marks.long()  # 将所有时间标记转化为长整型
         #  B,L
-        year_mark, quarter_mark, month_mark, week_mark, day_mark, hour_mark = time_marks[:, :, 0], time_marks[:, :, 1], time_marks[:, :, 2], time_marks[:, :, 3], time_marks[:, :, 4], time_marks[:, :, 5]
+        year_mark, quarter_mark, month_mark, day_mark, week_mark, hour_mark = time_marks[:, :, 0], time_marks[:, :, 1], time_marks[:, :, 2], time_marks[:, :, 3], time_marks[:, :, 4], time_marks[:, :, 5]
+        if self.freq == 't':
+            minute_mark = time_marks[:, :, 6]
+        # 打印时间特征的最小最大值
+        # print(f"year_mark.min()={year_mark.min()}, year_mark.max()={year_mark.max()}")
+        # print(f"quarter_mark.min()={quarter_mark.min()}, quarter_mark.max()={quarter_mark.max()}")
+        # print(f"month_mark.min()={month_mark.min()}, month_mark.max()={month_mark.max()}")
+        # print(f"week_mark.min()={week_mark.min()}, week_mark.max()={week_mark.max()}")
+        # print(f"day_mark.min()={day_mark.min()}, day_mark.max()={day_mark.max()}")
+        # print(f"hour_mark.min()={hour_mark.min()}, hour_mark.max()={hour_mark.max()}")
 
         # 获取所有对应的趋势并一次性加和
         trends = (
@@ -49,6 +59,8 @@ class Model(nn.Module):
             self.day_trend[day_mark] +
             self.hour_trend[hour_mark]
         )
+        if self.freq == 't':
+            trends = trends + self.minute_trend[minute_mark]
 
         return trends
     def forward(self, batch_x,batch_x_mark, batch_y, batch_y_mark, mask=None):

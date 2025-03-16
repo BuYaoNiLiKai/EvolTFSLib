@@ -19,7 +19,6 @@ do
       --seq_len $seq_len \
       --pred_len $pred_len \
       --enc_in 7 \
-      --fb True \
       --embed 'f'\
       --des 'Exp' \
       --itr 1 \

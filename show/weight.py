@@ -18,10 +18,10 @@ class Config:
 if __name__ == '__main__':
     configs = Config('h', 7)
     model = FB.Model(configs)
-    model.load_state_dict(torch.load('etth13.pth', map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load('etth2.pth', map_location=torch.device('cpu')))
     # 加载到cpu
     root_path = '../dataset/'
-    file_name = 'etth1'
+    file_name = 'etth2'
     file_name = root_path + file_name + '.csv'
     model.eval()
     #获取权重
