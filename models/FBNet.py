@@ -23,6 +23,7 @@ class Model(nn.Module):
         self.week_trend = nn.Parameter(torch.zeros(7, self.channels), requires_grad=True)
         self.day_trend = nn.Parameter(torch.zeros(31, self.channels), requires_grad=True)
         self.hour_trend = nn.Parameter(torch.zeros(24, self.channels), requires_grad=True)
+        self.day_of_year_trend = nn.Parameter(torch.zeros(366, self.channels), requires_grad=True)
         self.bias = nn.Parameter(torch.zeros(self.channels), requires_grad=True)
         if self.freq == 't':
             self.minute_trend = nn.Parameter(torch.zeros(4, self.channels), requires_grad=True)
