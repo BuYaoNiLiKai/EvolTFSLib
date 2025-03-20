@@ -1,8 +1,8 @@
 model_name=FBNet
 root_path_name=./dataset/
-data_path_name=electricity.csv
-model_id_name=electricity
-data_name=electricity
+data_path_name=traffic.csv
+model_id_name=traffic
+data_name=traffic
 seq_len=96
 for pred_len in 96 192 336 720
 do

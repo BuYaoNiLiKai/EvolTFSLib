@@ -33,17 +33,18 @@ class Model(nn.Module):
         #     nn.Linear(self.d_model, self.pred_len)
         # )
         # self.model = nn.Linear(self.seq_len, self.pred_len)
-        self.factor = nn.Sequential(
-            nn.Linear(self.seq_len, self.d_model),
-            nn.ReLU(),
-            nn.Linear(self.d_model,6))
+        # self.factor = nn.Sequential(
+        #     nn.Linear(self.seq_len, self.d_model),
+        #     nn.ReLU(),
+        #     nn.Linear(self.d_model,6))
     def get_trends(self, time_marks):
         """
         """
         # 获取所有时间特征的索引，避免多次long()操作
         time_marks = time_marks.long()  # 将所有时间标记转化为长整型
         #  B,L
-        year_mark, quarter_mark, month_mark, day_mark, week_mark, hour_mark = time_marks[:, :, 0], time_marks[:, :, 1], time_marks[:, :, 2], time_marks[:, :, 3], time_marks[:, :, 4], time_marks[:, :, 5]
+        year_mark, quarter_mark, month_mark, day_mark, week_mark, hour_mark ,day_of_year_mark=\
+            time_marks[:, :, 0], time_marks[:, :, 1], time_marks[:, :, 2], time_marks[:, :, 3], time_marks[:, :, 4], time_marks[:, :, 5], time_marks[:, :, 6]
         if self.freq == 't':
             minute_mark = time_marks[:, :, 6]
         # 打印时间特征的最小最大值
@@ -61,7 +62,8 @@ class Model(nn.Module):
             self.month_trend[month_mark] +
             self.week_trend[week_mark] +
             self.day_trend[day_mark] +
-            self.hour_trend[hour_mark]
+            self.hour_trend[hour_mark]+
+            self.day_of_year_trend[day_of_year_mark]
         )
         if self.freq == 't':
             trends = trends + self.minute_trend[minute_mark]
@@ -71,8 +73,10 @@ class Model(nn.Module):
         # x_mark_enc: [Batch, Input length, 5 or 6 ] 对应年月日周时分
         # 输入数据 以及他的时间编码 96*7  预测 192*7
         # 拼接batch_x_mark和batch_y_mark，形成新的张量
+        print(f"batch_x.shape={batch_x.shape}, batch_x_mark.shape={batch_x_mark.shape}, batch_y.shape={batch_y.shape}, batch_y_mark.shape={batch_y_mark.shape}")
 
         combined_time_marks = torch.cat((batch_x_mark, batch_y_mark), dim=1)  # (B, L_x + L_y, 6)
+        print(combined_time_marks.shape)
         # 获取拼接后的时间特征的趋势
         combined_trends = self.get_trends(combined_time_marks)
         # 获取历史时间特征的趋势
@@ -80,7 +84,7 @@ class Model(nn.Module):
 
         # 获取未来时间特征的趋势
         trends_y = combined_trends[:, batch_x_mark.shape[1]:, :]  # (B, L_y, channels)
-        factor = self.factor(batch_x.permute(0, 2, 1)).permute(0, 2, 1)
+        # factor = self.factor(batch_x.permute(0, 2, 1)).permute(0, 2, 1)
         # 加上 bias
         trends_x = trends_x + self.bias  # (B, L_x, channels)
         trends_y = trends_y + self.bias  # (B, L_y, channels)

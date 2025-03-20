@@ -6,7 +6,10 @@ data_dict = {
     'ETTh2': Dataset_ETT_hour,
     'ETTm1': Dataset_ETT_minute,
     'ETTm2': Dataset_ETT_minute,
-    'custom': Dataset_Custom,
+    'electricity':Dataset_Custom,
+    'traffic':Dataset_Custom,
+    'weather':Dataset_Custom,
+    'custom': Dataset_Custom
 }
 
 def data_provider(args, flag):

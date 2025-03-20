@@ -6,7 +6,7 @@ import torch.nn
 from matplotlib import pyplot as plt
 from sklearn.preprocessing import StandardScaler
 
-from plugins import FB
+from models.FBNet import Model as FBNet
 class Config:
     def __init__(self, freq, enc_in):
         self.freq = freq
@@ -17,7 +17,7 @@ class Config:
 
 if __name__ == '__main__':
     configs = Config('h', 7)
-    model = FB.Model(configs)
+    model = FBNet(configs)
     model.load_state_dict(torch.load('etth2.pth', map_location=torch.device('cpu')))
     # 加载到cpu
     root_path = '../dataset/'

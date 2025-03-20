@@ -76,6 +76,7 @@ class Dataset_ETT_hour(Dataset):
             df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)-1
             df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
             df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
+            df_stamp['day_of_year'] = df_stamp.date.apply(lambda row: row.timetuple().tm_yday - 1, 1)
             data_stamp = df_stamp.drop(['date'], axis=1).values
         elif self.timeenc == 1:
             data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
@@ -288,6 +289,7 @@ class Dataset_Custom(Dataset):
             df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)-1
             df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
             df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
+            df_stamp['day_of_year'] = df_stamp.date.apply(lambda row: row.timetuple().tm_yday - 1, 1)
             data_stamp = df_stamp.drop(['date'], axis=1).values
         elif self.timeenc == 1:
             data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
